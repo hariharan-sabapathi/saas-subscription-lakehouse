@@ -1,0 +1,67 @@
+docker compose up -d
+docker ps
+
+cd data-generator
+python generator.py
+
+kafka container: docker exec -it kafka bash
+
+curl http://localhost:8083/connectors
+
+Invoke-RestMethod -Method Post -Uri "http://localhost:8083/connectors" `
+-ContentType "application/json" `
+-Body '{
+"name": "postgres-connector",
+"config": {
+"connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+"database.hostname": "postgres",
+"database.port": "5432",
+"database.user": "saas_user",
+"database.password": "saas_password",
+"database.dbname": "saas_db",
+"database.server.name": "saas",
+"plugin.name": "pgoutput",
+"slot.name": "saas_slot",
+"publication.autocreate.mode": "filtered",
+"table.include.list": "public.users,public.payments,public.invoices,public.subscriptions",
+"topic.prefix": "saas"
+}
+}'
+
+curl http://localhost:8083/connectors/postgres-connector/status
+
+kafka-topics --bootstrap-server kafka:29092 --list
+
+spark container: docker exec -it spark-master bash
+
+kafka-topics --bootstrap-server kafka:29092 --list
+
+docker exec -u root -it spark-master bash
+
+mkdir -p /delta/checkpoints/bronze/users
+mkdir -p /delta/bronze/users
+chmod -R 777 /delta
+
+bronze run:
+/opt/spark/bin/spark-submit \
+--packages io.delta:delta-spark_2.12:3.1.0,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
+--conf spark.jars.ivy=/tmp/.ivy \
+--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
+--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
+/opt/spark/work-dir/spark/bronze_users.py
+
+silver run:
+/opt/spark/bin/spark-submit \
+--packages io.delta:delta-spark_2.12:3.1.0 \
+--conf spark.jars.ivy=/tmp/.ivy \
+--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension \
+--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog \
+spark/silver_xxxxxxxxx.py
+
+verify delta table:
+ls /delta/silver
+
+verify dbt:
+/opt/spark/bin/beeline -u jdbc:hive2://localhost:10000
+
+http://localhost:8080
