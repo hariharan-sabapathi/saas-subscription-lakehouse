@@ -47,7 +47,7 @@ dbt Transformations
         │
         ├── Staging Models
         ├── Core Models
-        └── Mart Models
+        └── Mart Models (Gold Layer)
         │
         ▼
 Airflow Orchestration
@@ -390,5 +390,6 @@ Potential enhancements include:
 ## Author
 
 **Hariharan Nadanasabapathi**
+
 
 
