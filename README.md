@@ -27,7 +27,7 @@ Data Generator
 PostgreSQL (Source DB)
         │
         ▼
-Debizium CDC Connector
+Debezium CDC Connector
         │
         ▼
 Kafka Topics
@@ -52,8 +52,9 @@ dbt Transformations
         ▼
 Airflow Orchestration
 ```
-## Components of the Platform
 ---
+
+## Components of the Platform
 
 ### PostgreSQL
 
@@ -389,4 +390,5 @@ Potential enhancements include:
 ## Author
 
 **Hariharan Nadanasabapathi**
+
 
